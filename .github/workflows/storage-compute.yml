@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  Env:
+    Type: String
+  DBName:
+    Type: String
+    Default: postgres-database-test
+  DBClass:
+    Default: db.t3.micro
+    Description: Database instance class
+    Type: String
+    ConstraintDescription: must select a valid database instance type.
+  DBAllocatedStorage:
+    Default: '5'
+    Description: The size of the database (Gb)
+    Type: Number
+    MinValue: '5'
+    MaxValue: '6144'
+  SecurityGroup:
+    Type: AWS::SSM::Parameter::Value<String>
+
+Resources:
+  Database:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Retain
+    Properties:
+      DBName: !Ref DBName
+      AllocatedStorage: !Ref DBAllocatedStorage
+      DBInstanceClass:
+        Ref: DBClass
+      Engine: postgres
+      MasterUsername: !Sub '{{resolve:ssm:/database-test/${Env}/db/username}}'
+      MasterUserPassword: !Sub '{{resolve:ssm:/database-test/${Env}/db/password}}'
+      VPCSecurityGroups: 
+        - !Ref SecurityGroup
+  DatabaseSSM:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: Database-test
+      Type: String
+      Value:
+        Fn::Join:
+          - ''
+          - - jdbc:postgresql://
+            - Fn::GetAtt:
+                - Database
+                - Endpoint.Address
+            - ':'
+            - Fn::GetAtt:
+                - Database
+                - Endpoint.Port
+            - '/'
+            - !Ref DBName
+
+Outputs:
+  DatabaseSSM:
+    Value: !Ref DatabaseSSM
