@@ -36,7 +36,7 @@ jobs:
         uses: aws-actions/aws-cloudformation-github-deploy@v1
         with:
           name: ${{ env.branch_env }}
-          template: ./s3-compute.yml
+          template: ././s3-compute.yml
           capabilities: CAPABILITY_NAMED_IAM
           parameter-overrides:
             "Env=${{ env.branch_env }}"
